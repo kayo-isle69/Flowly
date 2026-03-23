@@ -88,21 +88,7 @@ flowly/
 - **Fonts** — Cormorant Garamond + Syne + DM Mono (Google Fonts)
 - **Storage** — Browser `localStorage` (no backend required)
 - **PWA** — `manifest.json` + Service Worker (`sw.js`)
-- **Hosting** — GitHub Pages
-
----
-
-
----
-
-## Screenshots
-
-> _Coming soon — add screenshots to `/screenshots/` and link them here_
-
-| Dashboard | Transactions | Budget | Settings |
-|---|---|---|---|
-| ![](screenshots/dashboard.png) | ![](screenshots/transactions.png) | ![](screenshots/budget.png) | ![](screenshots/settings.png) |
-
+- **Hosting** — GitHub Page
 ---
 
 ## Roadmap
