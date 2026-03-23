@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Flowly — Transactions</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#c4a365">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="bg-mesh"></div>
+
+<header class="topbar">
+  <a href="app.html" class="topbar-logo">
+    <div class="logo-mark">₣</div>
+    Flowly
+  </a>
+  <div class="topbar-actions">
+    <button class="icon-btn" id="theme-btn" onclick="toggleTheme()">☀</button>
+  </div>
+</header>
+
+<nav class="bottom-nav">
+  <a href="app.html" class="nav-item">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    Dashboard
+  </a>
+  <a href="transactions.html" class="nav-item active">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+    Transactions
+  </a>
+  <a href="budget.html" class="nav-item">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 2"/></svg>
+    Budget
+  </a>
+  <a href="settings.html" class="nav-item">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v3M12 20v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M1 12h3M20 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/></svg>
+    Settings
+  </a>
+</nav>
+
+<button class="fab" onclick="openModal()" title="Add Transaction">+</button>
+
+<main class="page fade-up">
+  <h1 class="page-title"><em>All</em> Transactions</h1>
+  <div class="page-sub" id="tx-count">0 entries</div>
+
+  <!-- FILTERS -->
+  <div style="display:flex;gap:8px;margin-bottom:16px;overflow-x:auto;padding-bottom:4px">
+    <button class="pill pill-gold" id="f-all"    onclick="setFilter('all')">All</button>
+    <button class="pill"           id="f-income"  onclick="setFilter('income')" style="background:var(--green-dim);color:var(--green)">Income</button>
+    <button class="pill"           id="f-expense" onclick="setFilter('expense')" style="background:var(--red-dim);color:var(--red)">Expense</button>
+  </div>
+
+  <!-- SEARCH -->
+  <div style="margin-bottom:16px">
+    <input type="text" class="form-input" id="search-input" placeholder="🔍  Search transactions…" oninput="renderList()">
+  </div>
+
+  <!-- LIST -->
+  <div id="tx-list"></div>
+</main>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal-overlay" onclick="maybeCloseModal(event)">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="modal-title">New Transaction</div>
+
+    <div class="type-toggle">
+      <button class="type-btn active-exp" id="btn-expense" onclick="setType('expense')">↓ Expense</button>
+      <button class="type-btn" id="btn-income" onclick="setType('income')">↑ Income</button>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Amount</label>
+      <input type="number" class="form-input" id="tx-amount" placeholder="0.00" step="0.01" min="0">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Name / Description</label>
+      <input type="text" class="form-input" id="tx-name" placeholder="e.g. Grocery Store">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Category</label>
+      <div class="cat-grid" id="cat-grid"></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Date</label>
+      <input type="date" class="form-input" id="tx-date">
+    </div>
+
+    <button class="btn btn-gold" onclick="submitTransaction()">Save</button>
+    <button class="btn btn-outline" style="margin-top:10px" onclick="closeModal()">Cancel</button>
+    <button class="btn btn-danger" id="delete-btn" style="margin-top:10px;display:none" onclick="confirmDelete()">Delete Transaction</button>
+  </div>
+</div>
+
+<div class="toast"></div>
+<script src="app.js"></script>
+<script>
+let currentType = 'expense';
+let selectedCategory = 'food';
+let editingId = null;
+let activeFilter = 'all';
+
+function init() { renderList(); }
+
+function setFilter(f) {
+  activeFilter = f;
+  document.querySelectorAll('[id^="f-"]').forEach(el => {
+    el.style.opacity = el.id === 'f-' + f ? '1' : '0.45';
+  });
+  renderList();
+}
+
+function renderList() {
+  const txs = getTransactions();
+  const q = document.getElementById('search-input').value.toLowerCase();
+  const filtered = txs.filter(tx => {
+    if (activeFilter !== 'all' && tx.type !== activeFilter) return false;
+    if (q && !tx.name.toLowerCase().includes(q) && !tx.category.includes(q)) return false;
+    return true;
+  });
+
+  document.getElementById('tx-count').textContent = `${filtered.length} entr${filtered.length!==1?'ies':'y'}`;
+
+  if (filtered.length === 0) {
+    document.getElementById('tx-list').innerHTML = `<div class="empty"><div class="empty-icon">🔍</div><div class="empty-title">No results</div><div class="empty-sub">Try a different search or filter</div></div>`;
+    return;
+  }
+
+  // Group by date
+  const grouped = {};
+  filtered.forEach(tx => {
+    if (!grouped[tx.date]) grouped[tx.date] = [];
+    grouped[tx.date].push(tx);
+  });
+
+  let html = '';
+  Object.keys(grouped).sort((a,b) => b.localeCompare(a)).forEach(date => {
+    const label = formatDateGroup(date);
+    const dayTotal = grouped[date].reduce((s, t) => s + (t.type==='income'?t.amount:-t.amount), 0);
+    html += `<div class="section-label" style="display:flex;justify-content:space-between;align-items:center">
+      <span>${label}</span>
+      <span style="color:${dayTotal>=0?'var(--green)':'var(--red)'}">${dayTotal>=0?'+':''}${fmt(dayTotal)}</span>
+    </div>`;
+    grouped[date].forEach(tx => { html += txHTML(tx); });
+  });
+
+  document.getElementById('tx-list').innerHTML = html;
+}
+
+function formatDateGroup(d) {
+  const today = new Date().toISOString().split('T')[0];
+  const yest = new Date(Date.now()-86400000).toISOString().split('T')[0];
+  if (d === today) return 'Today';
+  if (d === yest) return 'Yesterday';
+  return new Date(d + 'T00:00:00').toLocaleDateString('en', { weekday:'short', month:'short', day:'numeric' });
+}
+
+function txHTML(tx) {
+  const cat = getCategoryInfo(tx.category);
+  return `<div class="tx-item" onclick="openEdit('${tx.id}')">
+    <div class="tx-icon" style="background:${cat.color}22">${cat.emoji}</div>
+    <div class="tx-info">
+      <div class="tx-name">${tx.name}</div>
+      <div class="tx-meta">${cat.label}</div>
+    </div>
+    <span class="tx-amount ${tx.type==='income'?'pos':'neg'}">${tx.type==='income'?'+':'-'}${fmt(tx.amount)}</span>
+  </div>`;
+}
+
+function buildCatGrid() {
+  document.getElementById('cat-grid').innerHTML = CATEGORIES.map(c =>
+    `<div class="cat-chip ${c.id===selectedCategory?'selected':''}" onclick="selectCat('${c.id}')">
+      <span>${c.emoji}</span><span>${c.label}</span>
+    </div>`
+  ).join('');
+}
+function selectCat(id) { selectedCategory = id; buildCatGrid(); }
+function setType(type) {
+  currentType = type;
+  document.getElementById('btn-expense').className = 'type-btn'+(type==='expense'?' active-exp':'');
+  document.getElementById('btn-income').className  = 'type-btn'+(type==='income' ?' active-inc':'');
+}
+
+function openModal() {
+  editingId = null;
+  document.getElementById('modal-title').textContent = 'New Transaction';
+  document.getElementById('tx-amount').value = '';
+  document.getElementById('tx-name').value = '';
+  document.getElementById('tx-date').value = new Date().toISOString().split('T')[0];
+  document.getElementById('delete-btn').style.display = 'none';
+  setType('expense'); selectedCategory = 'food'; buildCatGrid();
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function openEdit(id) {
+  const tx = getTransactions().find(t => t.id === id);
+  if (!tx) return;
+  editingId = id;
+  document.getElementById('modal-title').textContent = 'Edit Transaction';
+  document.getElementById('tx-amount').value = tx.amount;
+  document.getElementById('tx-name').value = tx.name;
+  document.getElementById('tx-date').value = tx.date;
+  document.getElementById('delete-btn').style.display = 'block';
+  setType(tx.type); selectedCategory = tx.category; buildCatGrid();
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
+function maybeCloseModal(e) { if (e.target===document.getElementById('modal-overlay')) closeModal(); }
+
+function submitTransaction() {
+  const amount = parseFloat(document.getElementById('tx-amount').value);
+  const name   = document.getElementById('tx-name').value.trim();
+  const date   = document.getElementById('tx-date').value;
+  if (!amount || amount<=0) return showToast('Enter a valid amount','error');
+  if (!name) return showToast('Enter a description','error');
+
+  if (editingId) {
+    editTransaction(editingId, { type:currentType, category:selectedCategory, name, amount, date });
+    showToast('Updated ✓');
+  } else {
+    addTransaction({ type:currentType, category:selectedCategory, name, amount, date });
+    showToast('Saved ✓');
+  }
+  closeModal(); renderList();
+}
+
+function confirmDelete() {
+  if (!confirm('Delete this transaction?')) return;
+  deleteTransaction(editingId);
+  closeModal(); renderList();
+  showToast('Deleted','error');
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>

@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Flowly — Budget</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#c4a365">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="bg-mesh"></div>
+
+<header class="topbar">
+  <a href="app.html" class="topbar-logo">
+    <div class="logo-mark">₣</div>
+    Flowly
+  </a>
+  <div class="topbar-actions">
+    <button class="icon-btn" id="theme-btn" onclick="toggleTheme()">☀</button>
+  </div>
+</header>
+
+<nav class="bottom-nav">
+  <a href="app.html" class="nav-item">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    Dashboard
+  </a>
+  <a href="transactions.html" class="nav-item">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+    Transactions
+  </a>
+  <a href="budget.html" class="nav-item active">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 2"/></svg>
+    Budget
+  </a>
+  <a href="settings.html" class="nav-item">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v3M12 20v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M1 12h3M20 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/></svg>
+    Settings
+  </a>
+</nav>
+
+<button class="fab" onclick="openAddModal()" title="Add Budget">+</button>
+
+<main class="page fade-up">
+  <h1 class="page-title"><em>Budget</em> Limits</h1>
+  <div class="page-sub" id="budget-month">March 2026</div>
+
+  <!-- SUMMARY CARD -->
+  <div class="card" id="summary-card">
+    <div class="card-row">
+      <div>
+        <div class="balance-label">Total Budget</div>
+        <div style="font-family:var(--font-d);font-size:1.5rem;font-weight:300" id="total-budget">$0</div>
+      </div>
+      <div style="text-align:right">
+        <div class="balance-label">Total Spent</div>
+        <div style="font-family:var(--font-d);font-size:1.5rem;color:var(--red)" id="total-spent">$0</div>
+      </div>
+    </div>
+    <div style="margin-top:14px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+        <span style="font-size:0.7rem;color:var(--text-faint);font-family:var(--font-mono)">Overall Progress</span>
+        <span style="font-size:0.7rem;font-family:var(--font-mono)" id="overall-pct">0%</span>
+      </div>
+      <div class="budget-bar-bg">
+        <div class="budget-bar-fill" id="overall-bar" style="width:0%;background:var(--gold)"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-label">Per Category</div>
+  <div id="budget-list"></div>
+</main>
+
+<!-- ADD/EDIT BUDGET MODAL -->
+<div class="modal-overlay" id="modal-overlay" onclick="maybeCloseModal(event)">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="modal-title">Set Budget Limit</div>
+
+    <div class="form-group">
+      <label class="form-label">Category</label>
+      <select class="form-select" id="budget-cat">
+        <option value="">Select category…</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Monthly Limit</label>
+      <input type="number" class="form-input" id="budget-limit" placeholder="0.00" step="0.01" min="0">
+    </div>
+
+    <button class="btn btn-gold" onclick="saveBudgetEntry()">Save Budget</button>
+    <button class="btn btn-outline" style="margin-top:10px" onclick="closeModal()">Cancel</button>
+    <button class="btn btn-danger" id="budget-delete-btn" style="margin-top:10px;display:none" onclick="deleteBudgetEntry()">Remove Budget</button>
+  </div>
+</div>
+
+<div class="toast"></div>
+<script src="app.js"></script>
+<script>
+let editingCat = null;
+
+function init() {
+  const now = new Date();
+  document.getElementById('budget-month').textContent =
+    now.toLocaleString('default', { month: 'long', year: 'numeric' });
+
+  // populate select
+  const sel = document.getElementById('budget-cat');
+  CATEGORIES.filter(c => c.id !== 'salary').forEach(c => {
+    const o = document.createElement('option');
+    o.value = c.id; o.textContent = c.emoji + ' ' + c.label;
+    sel.appendChild(o);
+  });
+
+  renderBudgets();
+}
+
+function renderBudgets() {
+  const budgets = getBudgets();
+  const now = new Date();
+  const txs = getMonthTransactions(now.getFullYear(), now.getMonth());
+  const catSpend = calcCategorySpend(txs);
+
+  let totalBudget = 0, totalSpent = 0;
+  budgets.forEach(b => { totalBudget += b.limit; totalSpent += (catSpend[b.category.toLowerCase()] || 0); });
+
+  document.getElementById('total-budget').textContent = fmt(totalBudget);
+  document.getElementById('total-spent').textContent = fmt(totalSpent);
+
+  const overallPct = totalBudget > 0 ? Math.min(100, (totalSpent/totalBudget)*100) : 0;
+  document.getElementById('overall-pct').textContent = overallPct.toFixed(0) + '%';
+  const ob = document.getElementById('overall-bar');
+  ob.style.width = overallPct + '%';
+  ob.style.background = overallPct >= 100 ? 'var(--red)' : overallPct >= 80 ? 'var(--gold)' : 'var(--green)';
+
+  if (budgets.length === 0) {
+    document.getElementById('budget-list').innerHTML = `<div class="empty"><div class="empty-icon">📊</div><div class="empty-title">No budgets set</div><div class="empty-sub">Tap + to set a category limit</div></div>`;
+    return;
+  }
+
+  document.getElementById('budget-list').innerHTML = budgets.map(b => {
+    const catId = b.category.toLowerCase();
+    const cat = getCategoryInfo(catId);
+    const spent = catSpend[catId] || 0;
+    const pct = b.limit > 0 ? Math.min(100, (spent/b.limit)*100) : 0;
+    const over = spent > b.limit;
+    const warn = pct >= 80;
+    const barColor = over ? 'var(--red)' : warn ? '#e0a35c' : 'var(--green)';
+
+    return `<div class="budget-item" onclick="openEditModal('${b.category}')">
+      <div class="budget-row">
+        <div class="budget-cat">${cat.emoji} ${b.category}</div>
+        <div class="budget-amounts">${fmt(spent)} / ${fmt(b.limit)}</div>
+      </div>
+      <div class="budget-bar-bg">
+        <div class="budget-bar-fill" style="width:${pct}%;background:${barColor}"></div>
+      </div>
+      ${over ? `<div class="budget-warning">⚠ Over budget by ${fmt(spent - b.limit)}</div>` :
+        warn ? `<div class="budget-warning" style="color:#e0a35c">⚠ ${(100-pct).toFixed(0)}% remaining</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function openAddModal() {
+  editingCat = null;
+  document.getElementById('modal-title').textContent = 'Set Budget Limit';
+  document.getElementById('budget-cat').value = '';
+  document.getElementById('budget-cat').disabled = false;
+  document.getElementById('budget-limit').value = '';
+  document.getElementById('budget-delete-btn').style.display = 'none';
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function openEditModal(category) {
+  const b = getBudgets().find(x => x.category === category);
+  if (!b) return;
+  editingCat = category;
+  document.getElementById('modal-title').textContent = 'Edit Budget — ' + category;
+  document.getElementById('budget-cat').value = category.toLowerCase();
+  document.getElementById('budget-cat').disabled = true;
+  document.getElementById('budget-limit').value = b.limit;
+  document.getElementById('budget-delete-btn').style.display = 'block';
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function saveBudgetEntry() {
+  const limit = parseFloat(document.getElementById('budget-limit').value);
+  if (!limit || limit <= 0) return showToast('Enter a valid amount','error');
+
+  const budgets = getBudgets();
+
+  if (editingCat) {
+    const idx = budgets.findIndex(b => b.category === editingCat);
+    if (idx >= 0) budgets[idx].limit = limit;
+  } else {
+    const catId = document.getElementById('budget-cat').value;
+    if (!catId) return showToast('Select a category','error');
+    const cat = getCategoryInfo(catId);
+    const exists = budgets.find(b => b.category.toLowerCase() === catId);
+    if (exists) { exists.limit = limit; }
+    else budgets.push({ category: cat.label, emoji: cat.emoji, limit });
+  }
+
+  saveBudgets(budgets);
+  closeModal(); renderBudgets();
+  showToast('Budget saved ✓');
+}
+
+function deleteBudgetEntry() {
+  if (!confirm('Remove this budget?')) return;
+  const budgets = getBudgets().filter(b => b.category !== editingCat);
+  saveBudgets(budgets);
+  closeModal(); renderBudgets();
+  showToast('Removed','error');
+}
+
+function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
+function maybeCloseModal(e) { if (e.target===document.getElementById('modal-overlay')) closeModal(); }
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>

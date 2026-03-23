@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Flowly — Settings</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#c4a365">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="bg-mesh"></div>
+
+<header class="topbar">
+  <a href="app.html" class="topbar-logo">
+    <div class="logo-mark">₣</div>
+    Flowly
+  </a>
+  <div class="topbar-actions">
+    <button class="icon-btn" id="theme-btn" onclick="toggleTheme()">☀</button>
+  </div>
+</header>
+
+<nav class="bottom-nav">
+  <a href="app.html" class="nav-item">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    Dashboard
+  </a>
+  <a href="transactions.html" class="nav-item">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+    Transactions
+  </a>
+  <a href="budget.html" class="nav-item">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 2"/></svg>
+    Budget
+  </a>
+  <a href="settings.html" class="nav-item active">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v3M12 20v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M1 12h3M20 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/></svg>
+    Settings
+  </a>
+</nav>
+
+<main class="page fade-up">
+  <h1 class="page-title">App <em>Settings</em></h1>
+  <div class="page-sub">Preferences & Data</div>
+
+  <!-- PROFILE -->
+  <div class="section-label">Profile</div>
+  <div class="card">
+    <div class="form-group" style="margin-bottom:0">
+      <label class="form-label">Your Name</label>
+      <input type="text" class="form-input" id="setting-name" placeholder="Enter your name"
+        oninput="saveSetting('name', this.value)">
+    </div>
+  </div>
+
+  <!-- APPEARANCE -->
+  <div class="section-label">Appearance</div>
+  <div class="card">
+    <div class="setting-row">
+      <div>
+        <div class="setting-label">Dark Mode</div>
+        <div class="setting-sub">Switch between dark and light theme</div>
+      </div>
+      <div class="toggle" id="theme-toggle" onclick="toggleThemeSwitch()"></div>
+    </div>
+  </div>
+
+  <!-- CURRENCY -->
+  <div class="section-label">Currency</div>
+  <div class="card">
+    <div class="form-group" style="margin-bottom:0">
+      <label class="form-label">Display Currency</label>
+      <select class="form-select" id="currency-select" onchange="setCurrency(this.value)">
+      </select>
+    </div>
+  </div>
+
+  <!-- DATA -->
+  <div class="section-label">Data & Export</div>
+  <div class="card">
+    <div class="setting-row">
+      <div>
+        <div class="setting-label">Total Transactions</div>
+        <div class="setting-sub" id="tx-stat">0 entries stored locally</div>
+      </div>
+      <span class="pill pill-gold" id="tx-count-pill">0</span>
+    </div>
+    <div class="setting-row">
+      <div>
+        <div class="setting-label">Storage Used</div>
+        <div class="setting-sub" id="storage-stat">Calculating…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- EXPORT -->
+  <div class="section-label">Export</div>
+  <button class="btn btn-outline" onclick="exportCSV()" style="margin-bottom:10px">
+    📥 &nbsp; Export as CSV
+  </button>
+  <button class="btn btn-outline" onclick="exportJSON()" style="margin-bottom:10px">
+    📦 &nbsp; Export as JSON
+  </button>
+
+  <!-- INSTALL PWA -->
+  <div class="section-label">App</div>
+  <button class="btn btn-gold" onclick="triggerInstall()" style="margin-bottom:10px">
+    📲 &nbsp; Install as App (PWA)
+  </button>
+  <a href="index.html" class="btn btn-outline" style="margin-bottom:10px">
+    🏠 &nbsp; Back to Landing Page
+  </a>
+
+  <!-- DANGER -->
+  <div class="section-label" style="color:var(--red)">Danger Zone</div>
+  <button class="btn btn-danger" onclick="clearAllData()">
+    🗑 &nbsp; Clear All Data
+  </button>
+
+  <div style="height:20px"></div>
+  <div style="text-align:center;font-size:0.65rem;color:var(--text-faint);font-family:var(--font-mono)">
+    Flowly v1.0.0 · Komino_dev · All data stored locally
+  </div>
+</main>
+
+<div class="toast"></div>
+<script src="app.js"></script>
+<script>
+function init() {
+  const s = getSettings();
+
+  document.getElementById('setting-name').value = s.name || '';
+
+  // theme toggle
+  const tog = document.getElementById('theme-toggle');
+  tog.classList.toggle('on', s.theme === 'dark');
+
+  // currency select
+  const sel = document.getElementById('currency-select');
+  CURRENCIES.forEach(c => {
+    const o = document.createElement('option');
+    o.value = c.code;
+    o.textContent = `${c.symbol} — ${c.name} (${c.code})`;
+    if (c.code === s.currency) o.selected = true;
+    sel.appendChild(o);
+  });
+
+  // stats
+  const txs = getTransactions();
+  document.getElementById('tx-stat').textContent = `${txs.length} entries stored locally`;
+  document.getElementById('tx-count-pill').textContent = txs.length;
+
+  // storage estimate
+  let bytes = 0;
+  ['flowly_transactions','flowly_budgets','flowly_settings'].forEach(k => {
+    const v = localStorage.getItem(k);
+    if (v) bytes += v.length * 2;
+  });
+  const kb = (bytes / 1024).toFixed(1);
+  document.getElementById('storage-stat').textContent = `~${kb} KB used`;
+}
+
+function saveSetting(key, val) {
+  const s = getSettings();
+  s[key] = val;
+  saveSettings(s);
+}
+
+function toggleThemeSwitch() {
+  const s = getSettings();
+  s.theme = s.theme === 'dark' ? 'light' : 'dark';
+  saveSettings(s);
+  applyTheme();
+  document.getElementById('theme-toggle').classList.toggle('on', s.theme === 'dark');
+  const tb = document.getElementById('theme-btn');
+  if (tb) tb.textContent = s.theme === 'dark' ? '☀' : '🌙';
+}
+
+function setCurrency(code) {
+  const cur = CURRENCIES.find(c => c.code === code);
+  if (!cur) return;
+  const s = getSettings();
+  s.currency = cur.code;
+  s.currencySymbol = cur.symbol;
+  saveSettings(s);
+  showToast(`Currency set to ${cur.code} ✓`);
+}
+
+function exportCSV() {
+  const txs = getTransactions();
+  if (txs.length === 0) return showToast('No data to export', 'error');
+  const header = 'Date,Name,Type,Category,Amount\n';
+  const rows = txs.map(t =>
+    `${t.date},"${t.name}",${t.type},${t.category},${t.amount}`
+  ).join('\n');
+  download('flowly-export.csv', 'text/csv', header + rows);
+  showToast('CSV exported ✓');
+}
+
+function exportJSON() {
+  const txs = getTransactions();
+  if (txs.length === 0) return showToast('No data to export', 'error');
+  download('flowly-export.json', 'application/json', JSON.stringify(txs, null, 2));
+  showToast('JSON exported ✓');
+}
+
+function download(filename, type, content) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([content], { type }));
+  a.download = filename;
+  a.click();
+}
+
+function clearAllData() {
+  if (!confirm('This will permanently delete ALL your transactions and budgets. Are you sure?')) return;
+  if (!confirm('Really? This cannot be undone.')) return;
+  ['flowly_transactions','flowly_budgets'].forEach(k => localStorage.removeItem(k));
+  showToast('All data cleared', 'error');
+  setTimeout(() => location.href = 'app.html', 1500);
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
