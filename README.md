@@ -10,14 +10,14 @@
 
 **Track spending · Manage budgets · Visualize your financial health**
 
-[![Landing Page](https://img.shields.io/badge/Landing_Page-kayo--isle69.github.io%2Fflowly-c4a365?style=flat-square&logo=github)](https://kayo-isle69.github.io/flowly)
-[![Launch App](https://img.shields.io/badge/Launch_App-Open_Flowly-4eca8b?style=flat-square&logo=pwa)](https://kayo-isle69.github.io/flowly/app.html)
+[![Landing Page](https://img.shields.io/badge/Landing_Page-kayo--isle69.github.io%2FFlowly-c4a365?style=flat-square&logo=github)](https://kayo-isle69.github.io/Flowly)
+[![Launch App](https://img.shields.io/badge/Launch_App-Open_Flowly-4eca8b?style=flat-square&logo=pwa)](https://kayo-isle69.github.io/Flowly/app.html)
 [![License](https://img.shields.io/badge/License-MIT-5c9be0?style=flat-square)](LICENSE)
 [![Made by](https://img.shields.io/badge/Made_by-Komino__dev-c4a365?style=flat-square)](https://github.com/kayo-isle69)
 
 <br/>
 
-🌐 **[Landing Page](https://kayo-isle69.github.io/flowly)** &nbsp;·&nbsp; ⚡ **[Launch App](https://kayo-isle69.github.io/flowly/app.html)**
+🌐 **[Landing Page](https://kayo-isle69.github.io/Flowly)** &nbsp;·&nbsp; ⚡ **[Launch App](https://kayo-isle69.github.io/Flowly/app.html)**
 
 <br/>
 
