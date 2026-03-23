@@ -10,14 +10,14 @@
 
 **Track spending · Manage budgets · Visualize your financial health**
 
-[![Live Demo](https://img.shields.io/badge/Live_Demo-kayo--isle69.github.io%2Fflowly-c4a365?style=flat-square&logo=github)](https://kayo-isle69.github.io/flowly)
-[![PWA Ready](https://img.shields.io/badge/PWA-Ready-4eca8b?style=flat-square&logo=pwa)](https://kayo-isle69.github.io/flowly)
+[![Landing Page](https://img.shields.io/badge/Landing_Page-kayo--isle69.github.io%2Fflowly-c4a365?style=flat-square&logo=github)](https://kayo-isle69.github.io/flowly)
+[![Launch App](https://img.shields.io/badge/Launch_App-Open_Flowly-4eca8b?style=flat-square&logo=pwa)](https://kayo-isle69.github.io/flowly/app.html)
 [![License](https://img.shields.io/badge/License-MIT-5c9be0?style=flat-square)](LICENSE)
 [![Made by](https://img.shields.io/badge/Made_by-Komino__dev-c4a365?style=flat-square)](https://github.com/kayo-isle69)
 
 <br/>
 
-![Flowly Dashboard Preview](https://via.placeholder.com/860x400/090d14/c4a365?text=Flowly+Dashboard+Preview)
+🌐 **[Landing Page](https://kayo-isle69.github.io/flowly)** &nbsp;·&nbsp; ⚡ **[Launch App](https://kayo-isle69.github.io/flowly/app.html)**
 
 <br/>
 
@@ -88,7 +88,8 @@ flowly/
 - **Fonts** — Cormorant Garamond + Syne + DM Mono (Google Fonts)
 - **Storage** — Browser `localStorage` (no backend required)
 - **PWA** — `manifest.json` + Service Worker (`sw.js`)
-- **Hosting** — GitHub Page
+- **Hosting** — GitHub Pages
+
 ---
 
 ## Roadmap
